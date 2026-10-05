@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Earnly — direction study</title>
+<link rel="stylesheet" href="/Users/mac/.claude/skills/app-designer/assets/device.css">
+<style>
+  /* ------------------------------------------------------------------
+     Shared geometry: same content in all three so the comparison is
+     about the visual system, not the copy.
+     ------------------------------------------------------------------ */
+  .screen { --pad: 22px; }
+  .hdr { position: absolute; top: var(--safe-top); left: var(--pad); right: var(--pad);
+         display: flex; align-items: center; justify-content: space-between; }
+  .kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .ic { display: block; flex: none; }
+  .badge-v { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700;
+             padding: 4px 9px 4px 7px; letter-spacing: .01em; }
+  .big { font-weight: 900; letter-spacing: -.035em; line-height: .92; }
+  .meta { font-size: 13px; }
+  .sub { font-size: 15px; }
+  .card { position: relative; }
+  .card h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; font-size: 11.5px; }
+  .tag { padding: 3px 8px; }
+  .match { font-size: 12px; font-weight: 800; letter-spacing: -.01em; }
+  .pay { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; flex: none; }
+  .sec { position: absolute; left: var(--pad); right: var(--pad); }
+
+  /* ================= A. NIGHT MARKET =================
+     Place family. Deep ink-blue night, a stall lamp amber.
+     Tag shapes: one clipped corner. Hard offset shadows, no glow. */
+  .A { background: #0B1020; color: #F2EFE6; }
+  .A .kicker { color: #FFB020; }
+  .A .badge-v { background: rgba(255,176,32,.14); color: #FFB020; border-radius: 8px; }
+  .A .hero { top: calc(var(--safe-top) + 74px); }
+  .A .big { font-size: 62px; font-family: var(--sf), sans-serif; font-stretch: 118%; color: #FFFFFF; }
+  .A .cur { font-size: 20px; font-weight: 700; color: #FFB020; letter-spacing: -.01em; }
+  .A .meta { color: #9AA3BE; }
+  .A .card { background: #141B33; border-radius: 4px 22px 22px 22px; padding: 15px 15px 14px;
+             box-shadow: 0 5px 0 rgba(0,0,0,.55); }
+  .A .tag { background: rgba(255,255,255,.07); color: #C7CEE0; border-radius: 999px; }
+  .A .match { color: #FFB020; }
+  .A .matchpill { background: #FFB020; color: #17120A; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 800; }
+  .A .pay { color: #7CE0A6; }
+  .A .strip { background: #FFB020; color: #17120A; border-radius: 4px 18px 18px 18px; padding: 13px 14px; box-shadow: 0 5px 0 rgba(0,0,0,.55); }
+  .A .avatar { background: linear-gradient(#2A3557,#1B2440); border: 1.5px solid rgba(255,176,32,.5); }
+  .A .notif { position: relative; }
+  .A .notif::after { content: ""; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #FF5A3C; border: 2px solid #0B1020; }
+
+  /* ================= B. NOTICEBOARD =================
+     Printed matter. Cool newsprint grey, near-black ink, one risograph tangerine.
+     Layered paper slips: tape corner, slight rotation, hard shadow. */
+  .B { background: #E7E4DA; color: #16181C; }
+  .B .kicker { color: #16181C; opacity: .55; }
+  .B .badge-v { background: #16181C; color: #F2F0E8; border-radius: 3px; }
+  .B .hero { top: calc(var(--safe-top) + 74px); }
+  .B .big { font-size: 62px; font-stretch: 122%; }
+  .B .cur { font-size: 19px; font-weight: 700; color: #16181C; }
+  .B .meta { color: #6B6E75; }
+  .B .card { background: #FFFFFF; border-radius: 2px; padding: 15px 15px 14px;
+             box-shadow: 0 3px 0 rgba(22,24,28,.85); border: 1.5px solid #16181C; }
+  .B .card::before { content: ""; position: absolute; top: -9px; left: 14px; width: 46px; height: 16px;
+             background: rgba(232,80,15,.35); transform: rotate(-3deg); }
+  .B .tag { background: #EFEDE5; color: #33363C; border-radius: 2px; border: 1px solid rgba(22,24,28,.18); }
+  .B .match { color: #E8500F; }
+  .B .matchpill { background: #E8500F; color: #FFF6F1; border-radius: 2px; padding: 4px 9px; font-size: 12px; font-weight: 800; }
+  .B .pay { color: #16181C; }
+  .B .strip { background: #E8500F; color: #FFF6F1; border-radius: 2px; padding: 13px 14px; box-shadow: 0 3px 0 rgba(22,24,28,.85); }
+  .B .avatar { background: #CFCBC0; border: 1.5px solid #16181C; }
+  .B .notif { position: relative; }
+  .B .notif::after { content: ""; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #E8500F; border: 2px solid #E7E4DA; }
+
+  /* ================= C. VENDING =================
+     Play / colour field. One cobalt field, poster type, dispensed
+     cards with a hard black offset. Ink is black or white only. */
+  .C { background: #1D34D6; color: #FFFFFF; }
+  .C .kicker { color: #FFFFFF; opacity: .8; }
+  .C .badge-v { background: #FFFFFF; color: #1D34D6; border-radius: 999px; }
+  .C .hero { top: calc(var(--safe-top) + 66px); }
+  .C .big { font-size: 74px; font-stretch: 128%; letter-spacing: -.05em; }
+  .C .cur { font-size: 20px; font-weight: 800; }
+  .C .meta { color: rgba(255,255,255,.78); }
+  .C .card { background: #FFFFFF; color: #0A0A0A; border-radius: 20px 20px 20px 4px; padding: 15px;
+             box-shadow: 5px 5px 0 #0A0A0A; }
+  .C .tag { background: #EDEFFB; color: #333A55; border-radius: 999px; }
+  .C .match { color: #1D34D6; }
+  .C .matchpill { background: #0A0A0A; color: #FFFFFF; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 800; }
+  .C .pay { color: #0A0A0A; }
+  .C .strip { background: #0A0A0A; color: #FFFFFF; border-radius: 20px 20px 20px 4px; padding: 13px 14px; box-shadow: 5px 5px 0 rgba(255,255,255,.85); }
+  .C .avatar { background: #0A0A0A; border: 2px solid #FFFFFF; }
+  .C .notif { position: relative; }
+  .C .notif::after { content: ""; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; border-radius: 50%; background: #FF4D2E; border: 2px solid #1D34D6; }
+</style></head>
+<body>
+
+<!-- ============================= A. NIGHT MARKET ============================= -->
+<section class="screen A" data-name="a-night-market" data-theme="dark" data-chrome="light" data-time="18:52">
+  <div class="hdr">
+    <div class="row">
+      <span style="font-size:20px;font-weight:900;letter-spacing:-.04em;font-stretch:120%">Earnly</span>
+      <span class="badge-v">
+        <svg class="ic" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.9 2.1 2.8-.5.5 2.8L15.3 6l-1.4 2.5 1.4 2.5-2.1 1.6-.5 2.8-2.8-.5L8 16l-1.9-2.1-2.8.5-.5-2.8L.7 10l1.4-2.5L.7 5l2.1-1.6.5-2.8 2.8.5z"/><path d="M6.9 10.6L4.6 8.3l1-1 1.3 1.3 3-3 1 1z" fill="#0B1020"/></svg>
+        Verified
+      </span>
+    </div>
+    <div class="row">
+      <span class="notif"><svg class="ic" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F2EFE6" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></span>
+      <span class="avatar"></span>
+    </div>
+  </div>
+
+  <div class="sec hero">
+    <div class="kicker" style="margin-bottom:10px">This week · Lagos</div>
+    <div style="display:flex;align-items:flex-end;gap:10px">
+      <span class="big">284.50</span><span class="cur">USDC</span>
+    </div>
+    <div class="meta" style="margin-top:10px">Available now · <span style="color:#7CE0A6;font-weight:700">+241.00 earned</span> · 120.00 pending</div>
+  </div>
+
+  <div class="sec" style="top:calc(var(--safe-top) + 246px)">
+    <div class="kicker" style="margin-bottom:12px">Matched to you</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3>Need a React developer</h3><span class="matchpill">92% match</span>
+      </div>
+      <div class="meta" style="margin-bottom:10px">Remote · fixed · posts in 3 hours</div>
+      <div class="tags" style="margin-bottom:12px"><span class="tag">React</span><span class="tag">JavaScript</span><span class="tag">CSS</span></div>
+      <div class="row" style="justify-content:space-between"><span class="pay">150.00</span><span class="meta">USDC</span></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3>Dog walker needed</h3><span class="match pill match">67% match</span>
+      </div>
+      <div class="meta" style="margin-bottom:10px">2 km from campus · today 4pm</div>
+      <div class="tags"><span class="tag">Local</span><span class="tag">One hour</span></div>
+    </div>
+    <div class="strip">
+      <div class="row" style="justify-content:space-between">
+        <span style="font-weight:800;font-size:15px">Social media assistant</span>
+        <span class="meta" style="color:rgba(23,18,10,.7);font-weight:700">In progress</span>
+      </div>
+      <div class="meta" style="color:rgba(23,18,10,.72);margin-top:4px">Due Friday · 80.00 per week</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= B. NOTICEBOARD ============================= -->
+<section class="screen B" data-name="b-noticeboard" data-time="9:41">
+  <div class="hdr">
+    <div class="row">
+      <span style="font-size:20px;font-weight:900;letter-spacing:-.04em;font-stretch:122%">Earnly</span>
+      <span class="badge-v">
+        <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="#F2F0E8"><path d="M8 0l1.9 2.1 2.8-.5.5 2.8L15.3 6l-1.4 2.5 1.4 2.5-2.1 1.6-.5 2.8-2.8-.5L8 16l-1.9-2.1-2.8.5-.5-2.8L.7 10l1.4-2.5L.7 5l2.1-1.6.5-2.8 2.8.5z"/><path d="M6.9 10.6L4.6 8.3l1-1 1.3 1.3 3-3 1 1z" fill="#16181C"/></svg>
+        Verified
+      </span>
+    </div>
+    <div class="row">
+      <span class="notif"><svg class="ic" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#16181C" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></span>
+      <span class="avatar"></span>
+    </div>
+  </div>
+
+  <div class="sec hero">
+    <div class="kicker" style="margin-bottom:10px">This week · Lagos</div>
+    <div style="display:flex;align-items:flex-end;gap:8px">
+      <span class="big">284.50</span><span class="cur">USDC</span>
+    </div>
+    <div class="meta" style="margin-top:10px">Available now · <strong style="color:#16181C">+241.00 earned</strong> · 120.00 pending</div>
+  </div>
+
+  <div class="sec" style="top:calc(var(--safe-top) + 246px)">
+    <div class="kicker" style="margin-bottom:14px">Matched to you</div>
+    <div class="card" style="margin-bottom:16px;transform:rotate(-.5deg)">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3>Need a React developer</h3><span class="matchpill">92% match</span>
+      </div>
+      <div class="meta" style="margin-bottom:10px">Remote · fixed · posts in 3 hours</div>
+      <div class="tags" style="margin-bottom:12px"><span class="tag">React</span><span class="tag">JavaScript</span><span class="tag">CSS</span></div>
+      <div class="row" style="justify-content:space-between"><span class="pay">150.00 USDC</span><span class="match">Fixed budget</span></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;transform:rotate(.4deg)">
+      <h3 style="margin-bottom:8px">Dog walker needed</h3>
+      <div class="meta" style="margin-bottom:10px">2 km from campus · today 4pm</div>
+      <div class="tags"><span class="tag">Local</span><span class="tag">One hour</span><span class="tag">25.00</span></div>
+    </div>
+    <div class="strip">
+      <div class="row" style="justify-content:space-between">
+        <span style="font-weight:800;font-size:15px">Social media assistant</span>
+        <span class="meta" style="color:rgba(255,246,241,.8);font-weight:700">In progress</span>
+      </div>
+      <div class="meta" style="color:rgba(255,246,241,.8);margin-top:4px">Due Friday · 80.00 per week</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= C. VENDING ============================= -->
+<section class="screen C" data-name="c-vending" data-chrome="light" data-time="18:52">
+  <div class="hdr">
+    <div class="row">
+      <span style="font-size:20px;font-weight:900;letter-spacing:-.05em;font-stretch:130%">EARNLY</span>
+      <span class="badge-v">
+        <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="#1D34D6"><path d="M8 0l1.9 2.1 2.8-.5.5 2.8L15.3 6l-1.4 2.5 1.4 2.5-2.1 1.6-.5 2.8-2.8-.5L8 16l-1.9-2.1-2.8.5-.5-2.8L.7 10l1.4-2.5L.7 5l2.1-1.6.5-2.8 2.8.5z"/></svg>
+        Verified
+      </span>
+    </div>
+    <div class="row">
+      <span class="notif"><svg class="ic" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></span>
+      <span class="avatar"></span>
+    </div>
+  </div>
+
+  <div class="sec hero">
+    <div class="kicker" style="margin-bottom:8px">This week</div>
+    <div class="big">284.50</div>
+    <div class="cur" style="margin-top:6px">USDC available</div>
+    <div class="meta" style="margin-top:10px">+241.00 earned · 120.00 pending</div>
+  </div>
+
+  <div class="sec" style="top:calc(var(--safe-top) + 250px)">
+    <div class="kicker" style="margin-bottom:12px">Matched to you</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3>Need a React developer</h3><span class="matchpill">92%</span>
+      </div>
+      <div class="meta" style="margin-bottom:10px;color:#5A5F73">Remote · fixed · posts in 3 hours</div>
+      <div class="tags" style="margin-bottom:12px"><span class="tag">React</span><span class="tag">JavaScript</span><span class="tag">CSS</span></div>
+      <div class="row" style="justify-content:space-between"><span class="pay">150.00</span><span class="match">Fixed budget</span></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <h3 style="margin-bottom:8px">Dog walker needed</h3>
+      <div class="meta" style="margin-bottom:10px;color:#5A5F73">2 km from campus · today 4pm</div>
+      <div class="tags"><span class="tag">Local</span><span class="tag">One hour</span><span class="tag">25.00</span></div>
+    </div>
+    <div class="strip">
+      <div class="row" style="justify-content:space-between">
+        <span style="font-weight:800;font-size:15px">Social media assistant</span>
+        <span class="meta" style="color:rgba(255,255,255,.8);font-weight:700">In progress</span>
+      </div>
+      <div class="meta" style="color:rgba(255,255,255,.8);margin-top:4px">Due Friday · 80.00 per week</div>
+    </div>
+  </div>
+</section>
+
+<script src="/Users/mac/.claude/skills/app-designer/assets/device.js"></script>
+</body></html>

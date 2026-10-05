@@ -1,0 +1,102 @@
+[
+  {
+    "name": "a-night-market",
+    "fails": [],
+    "warns": [
+      "6 distinct left edges in the left third. Align to fewer verticals."
+    ],
+    "facts": {
+      "fonts": {
+        "SF Pro": 24
+      },
+      "sizes": [
+        62,
+        20,
+        19,
+        17,
+        15,
+        13,
+        12,
+        11.5
+      ],
+      "weights": [
+        "400",
+        "700",
+        "800",
+        "900"
+      ],
+      "leftEdges": 6,
+      "accentHues": [
+        48,
+        144
+      ],
+      "cards": 0
+    }
+  },
+  {
+    "name": "b-noticeboard",
+    "fails": [
+      "Contrast below WCAG on solid ground: 4.01:1 13px \"Available now · +241.00 earned · 120.00 \"; 3.53:1 12px \"92% match\"; 3.76:1 12px \"Fixed budget\"; 3.53:1 15px \"Social media assistant\"; 2.75:1 13px \"In progress\""
+    ],
+    "warns": [
+      "7 distinct left edges in the left third. Align to fewer verticals."
+    ],
+    "facts": {
+      "fonts": {
+        "SF Pro": 24
+      },
+      "sizes": [
+        62,
+        20,
+        19,
+        17,
+        15,
+        13,
+        12,
+        11.5
+      ],
+      "weights": [
+        "400",
+        "700",
+        "800",
+        "900"
+      ],
+      "leftEdges": 7,
+      "accentHues": [
+        24
+      ],
+      "cards": 0
+    }
+  },
+  {
+    "name": "c-vending",
+    "fails": [],
+    "warns": [],
+    "facts": {
+      "fonts": {
+        "SF Pro": 23
+      },
+      "sizes": [
+        74,
+        20,
+        19,
+        17,
+        15,
+        13,
+        12,
+        11.5
+      ],
+      "weights": [
+        "400",
+        "700",
+        "800",
+        "900"
+      ],
+      "leftEdges": 5,
+      "accentHues": [
+        240
+      ],
+      "cards": 3
+    }
+  }
+]
