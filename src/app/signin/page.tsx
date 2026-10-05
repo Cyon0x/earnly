@@ -19,7 +19,7 @@ const ERROR_COPY: Record<string, string> = {
 
 export default function SignInPage() {
   const router = useRouter();
-  const { ready, signedIn, verification, onboarded, signIn, database } = useApp();
+  const { ready, signedIn, verification, onboarded, signIn, refresh, database } = useApp();
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,6 +79,10 @@ export default function SignInPage() {
         setBusy(null);
         return;
       }
+      // Pull the new session into the store before routing: the guards on
+      // /verify and /onboarding read this context, and a stale snapshot would
+      // bounce the student straight back to /signin.
+      await refresh();
       router.replace(data.next ?? "/app");
     } catch {
       setError("Network problem — please try again.");

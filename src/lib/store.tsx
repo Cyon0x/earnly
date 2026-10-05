@@ -146,20 +146,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [database, setDatabase] = useState(false);
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(KEY);
-      // Hydration: the persisted store can only be read on the client, so this
-      // one synchronous setState is the intentional hand-off from SSR. The
-      // splash in AppShell keeps the first paint identical.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setState({ ...initial, ...(JSON.parse(raw) as Persisted) });
-    } catch {
-      /* a prototype store; a corrupt value just starts fresh */
-    }
-    setReady(true);
-  }, []);
-
   const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/session", { cache: "no-store" });
@@ -181,9 +167,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Subscribes to the session on the server; the state lands in a promise callback.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refresh();
+    // Read back the persisted prototype store first so a no-account visit still
+    // renders, then resolve the server session. `ready` only flips once the
+    // session lookup has settled: route guards must not run against a stale
+    // "signed out" snapshot and bounce a just-authenticated user to /signin.
+    try {
+      const raw = window.localStorage.getItem(KEY);
+      // Hydration: the persisted store can only be read on the client, so this
+      // one synchronous setState is the intentional hand-off from SSR. The
+      // splash in AppShell keeps the first paint identical.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) setState({ ...initial, ...(JSON.parse(raw) as Persisted) });
+    } catch {
+      /* a prototype store; a corrupt value just starts fresh */
+    }
+    let cancelled = false;
+    void (async () => {
+      await refresh();
+      if (!cancelled) setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   useEffect(() => {
