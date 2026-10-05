@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { EarnlyMark } from "@/components/AppShell";
+import { Faq } from "@/components/landing/Faq";
+import { EarningProducts } from "@/components/landing/Products";
+import { SiteFooter } from "@/components/landing/SiteFooter";
+import { Testimonials } from "@/components/landing/Testimonials";
 import { Button, Icon, Money, Stars, Tag, VerifiedBadge } from "@/components/ui";
 import { CATEGORIES, COMING_SOON, DEMO_REVIEWS } from "@/lib/data";
 
@@ -54,11 +58,17 @@ export default function LandingPage() {
             <a href="#work" className="hover:text-ink">
               Work
             </a>
+            <a href="#products" className="hover:text-ink">
+              Earn more
+            </a>
             <a href="#reputation" className="hover:text-ink">
               Reputation
             </a>
             <a href="#ai" className="hover:text-ink">
               AI finder
+            </a>
+            <a href="#faq" className="hover:text-ink">
+              FAQ
             </a>
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -136,7 +146,7 @@ export default function LandingPage() {
               />
               <div className="absolute left-5 top-5">
                 <span className="rounded-full bg-black/40 px-3 py-1.5 text-[11.5px] font-semibold text-white backdrop-blur">
-                  University of Lagos · Wednesday
+                  University of Toronto · Wednesday
                 </span>
               </div>
 
@@ -235,9 +245,9 @@ export default function LandingPage() {
                 Digital work and real-world work, in one place.
               </h2>
               <p className="mt-4 max-w-[54ch] text-[14.5px] leading-relaxed text-ink2">
-                A coding task for a shop in Yaba and a Saturday of helping someone move are both
-                paid work, and both build the same record. Earnly is built for the student who does
-                a bit of everything.
+                A landing page for a shop two streets from campus and a Saturday of helping someone
+                move are both paid work, and both build the same record. Earnly is built for the
+                student who does a bit of everything, in any city.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Tag tone="accent">Digital</Tag>
@@ -423,6 +433,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <EarningProducts />
+
       {/* ------------------------------------------------------- coming soon */}
       <section className="border-t border-rule">
         <div className="mx-auto max-w-[1240px] px-5 py-16">
@@ -454,6 +466,10 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
+
+      <Testimonials />
+
+      <Faq />
 
       {/* ---------------------------------------------------------- final CTA */}
       <section className="border-t border-rule">
@@ -503,29 +519,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ footer */}
-      <footer className="border-t border-rule">
-        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-4 px-5 py-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <EarnlyMark size={24} />
-            <span className="display-tight text-[17px]">Earnly</span>
-          </Link>
-          <span className="text-[12.5px] text-ink3">
-            A prototype for students who work. Demo data throughout.
-          </span>
-          <nav className="ml-auto flex flex-wrap items-center gap-5 text-[12.5px] text-ink3">
-            <a href="#how" className="hover:text-ink">
-              How it works
-            </a>
-            <a href="#ai" className="hover:text-ink">
-              AI finder
-            </a>
-            <Link href="/signin" className="hover:text-ink">
-              Sign in
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

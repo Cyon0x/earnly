@@ -9,12 +9,21 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b1020",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f0ea" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1020" },
+  ],
 };
+
+/** Applies the stored theme before first paint so there is no flash. */
+const THEME_BOOT = `try{var s=localStorage.getItem("earnly:v3");if(s){var t=JSON.parse(s).theme;if(t)document.documentElement.dataset.theme=t}}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="dark" className="h-full">
+    <html lang="en" data-theme="light" className="h-full" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body className="min-h-full">
         <AppProvider>{children}</AppProvider>
       </body>

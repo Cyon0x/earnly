@@ -11,7 +11,8 @@ import {
   SEARCH_STAGES,
   runSearch,
 } from "@/lib/ai";
-import { AI_SOURCES, SKILL_OPTIONS, TASK_TYPES } from "@/lib/data";
+import { AI_SOURCES, TASK_TYPES } from "@/lib/data";
+import { SkillsPicker } from "@/components/SkillsPicker";
 import { useApp } from "@/lib/store";
 import type { AiPrefs, AiResult } from "@/lib/types";
 import { OpportunityCard } from "@/components/cards";
@@ -25,7 +26,6 @@ export default function AiFinderPage() {
   const [step, setStep] = useState(0);
   const [phase, setPhase] = useState<Phase>(aiResults ? "results" : "wizard");
   const [stage, setStage] = useState(0);
-  const [customSkill, setCustomSkill] = useState("");
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const steps = useMemo(
@@ -114,41 +114,10 @@ export default function AiFinderPage() {
 
             <div className="mt-5">
               {step === 0 ? (
-                <>
-                  <Chips
-                    options={SKILL_OPTIONS}
-                    selected={prefs.skills}
-                    onToggle={(v) => toggle("skills", v)}
-                  />
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <input
-                      value={customSkill}
-                      onChange={(e) => setCustomSkill(e.target.value)}
-                      placeholder="Add your own skill"
-                      className="min-w-[180px] flex-1 rounded-full border border-rule bg-transparent px-4 py-2.5 text-[13.5px] outline-none placeholder:text-ink3"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && customSkill.trim()) {
-                          e.preventDefault();
-                          setPrefs((p) => ({
-                            ...p,
-                            skills: [...p.skills, customSkill.trim()],
-                          }));
-                          setCustomSkill("");
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (!customSkill.trim()) return;
-                        setPrefs((p) => ({ ...p, skills: [...p.skills, customSkill.trim()] }));
-                        setCustomSkill("");
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </>
+                <SkillsPicker
+                  value={prefs.skills}
+                  onChange={(skills) => setPrefs((p) => ({ ...p, skills }))}
+                />
               ) : null}
 
               {step === 1 ? (

@@ -9,14 +9,28 @@ import { useApp } from "@/lib/store";
 
 type Mode = "signup" | "signin";
 
+const ERROR_COPY: Record<string, string> = {
+  cancelled: "Google sign-in was cancelled. Nothing was changed.",
+  google_failed: "Unable to sign in with Google. Please try again.",
+  state_mismatch: "That sign-in link expired or was already used. Please try again.",
+  not_configured: "Google sign-in is not configured on this deployment yet.",
+  no_database: "Accounts are not configured on this deployment yet.",
+};
+
 export default function SignInPage() {
   const router = useRouter();
-  const { ready, signedIn, verification, onboarded, signIn } = useApp();
+  const { ready, signedIn, verification, onboarded, signIn, database } = useApp();
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"google" | "email" | null>(null);
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (code) setError(ERROR_COPY[code] ?? "Something went wrong signing you in. Please try again.");
+  }, []);
 
   useEffect(() => {
     if (!ready || !signedIn) return;
@@ -25,18 +39,51 @@ export default function SignInPage() {
     else router.replace("/app");
   }, [ready, signedIn, verification, onboarded, router]);
 
-  const proceed = (method: "google" | "email") => {
-    if (method === "email" && !email.includes("@")) {
-      setError("Enter an email address we can reach you at.");
-      return;
-    }
-    if (method === "email" && password.length < 6) {
-      setError("Use at least six characters for the demo password.");
-      return;
-    }
+  /** Real Google OAuth. The demo path is only used when no database is wired. */
+  const startGoogle = () => {
     setError(null);
-    signIn(method);
-    router.push("/verify");
+    if (!database) {
+      setBusy("google");
+      setTimeout(() => {
+        setBusy(null);
+        signIn("google");
+        router.push("/verify");
+      }, 450);
+      return;
+    }
+    setBusy("google");
+    // OAuth must be a full document navigation, not a client-side route change.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = "/api/auth/google";
+  };
+
+  const submitEmail = async () => {
+    setError(null);
+    if (!email.includes("@")) return setError("Enter an email address we can reach you at.");
+    if (password.length < 8) return setError("Use at least 8 characters for your password.");
+    if (!database) {
+      signIn("email");
+      router.push("/verify");
+      return;
+    }
+    setBusy("email");
+    try {
+      const res = await fetch("/api/auth/email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode, email, password }),
+      });
+      const data = (await res.json()) as { next?: string; error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "We could not sign you in. Please try again.");
+        setBusy(null);
+        return;
+      }
+      router.replace(data.next ?? "/app");
+    } catch {
+      setError("Network problem — please try again.");
+      setBusy(null);
+    }
   };
 
   return (
@@ -61,20 +108,19 @@ export default function SignInPage() {
 
           <div className="mt-7 flex flex-col gap-3">
             <button
-              onClick={() => {
-                setBusy("google");
-                setTimeout(() => {
-                  setBusy(null);
-                  proceed("google");
-                }, 550);
-              }}
-              className="flex items-center justify-center gap-3 rounded-full border border-rule bg-raised px-5 py-3.5 text-[14.5px] font-semibold transition-colors hover:border-ink/30"
+              type="button"
+              onClick={startGoogle}
+              disabled={busy !== null}
+              aria-busy={busy === "google"}
+              className="flex items-center justify-center gap-3 rounded-full border border-rule bg-raised px-5 py-3.5 text-[14.5px] font-semibold transition-colors hover:border-ink/30 disabled:opacity-70"
             >
-              <Icon name="google" size={19} />
+              <GoogleMark />
               {busy === "google" ? "Connecting…" : "Continue with Google"}
             </button>
             <p className="text-center text-[11.5px] text-ink3">
-              Demo only — no Google account is contacted.
+              {database
+                ? "You will be sent to Google and returned here. We only receive your name, email and photo."
+                : "Demo mode — no Google account is contacted on this deployment."}
             </p>
           </div>
 
@@ -88,7 +134,7 @@ export default function SignInPage() {
             className="flex flex-col gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              proceed("email");
+              void submitEmail();
             }}
           >
             <label className="block">
@@ -97,6 +143,7 @@ export default function SignInPage() {
               </span>
               <input
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@student.university.edu"
@@ -107,20 +154,27 @@ export default function SignInPage() {
               <span className="mb-1.5 block text-[13px] font-semibold">Password</span>
               <input
                 type="password"
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least six characters"
+                placeholder="At least 8 characters"
                 className="w-full rounded-full border border-rule bg-transparent px-4 py-3 text-[14px] outline-none placeholder:text-ink3 focus:border-accent"
               />
             </label>
             {error ? (
-              <p className="flex items-center gap-2 text-[12.5px] text-negative">
-                <Icon name="x" size={14} />
+              <p role="alert" className="flex items-start gap-2 text-[12.5px] text-negative">
+                <span className="mt-0.5 flex-none">
+                  <Icon name="x" size={14} />
+                </span>
                 {error}
               </p>
             ) : null}
-            <Button type="submit" size="lg" full className="mt-1">
-              {mode === "signup" ? "Create account" : "Sign in"}
+            <Button type="submit" size="lg" full className="mt-1" disabled={busy !== null}>
+              {busy === "email"
+                ? "Please wait…"
+                : mode === "signup"
+                  ? "Create account"
+                  : "Sign in"}
             </Button>
           </form>
 
@@ -138,7 +192,9 @@ export default function SignInPage() {
           </p>
 
           <p className="mt-4 text-center text-[11.5px] leading-relaxed text-ink3">
-            Prototype authentication. No real credentials are stored or sent anywhere.
+            {database
+              ? "Passwords are hashed on our server. We never store them in the browser."
+              : "Prototype authentication — no credentials are stored or sent anywhere."}
           </p>
         </div>
       </div>
@@ -167,7 +223,7 @@ export default function SignInPage() {
             {[
               { k: "Verified students", v: "2,480" },
               { k: "Paid in USDC", v: "184k" },
-              { k: "Open now", v: "312" },
+              { k: "Countries reached", v: "60+" },
             ].map((s) => (
               <div key={s.k} className="rounded-[16px] border border-white/15 bg-white/[.06] px-4 py-3">
                 <div className="figure text-[18px] font-bold text-white">{s.v}</div>
@@ -178,5 +234,29 @@ export default function SignInPage() {
         </div>
       </aside>
     </div>
+  );
+}
+
+/** The official four-colour Google G, drawn inline so it never 404s. */
+function GoogleMark() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.7 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.3 17.7 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.4-4.6 7l7.7 6c4.5-4.2 6.6-10.3 6.6-17.5z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.5 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.3.8-4.7l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.9-6.1z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.2 0 11.5-2 15.4-5.6l-7.7-6c-2.1 1.4-4.8 2.3-7.7 2.3-6.3 0-11.6-3.8-13.5-9.1l-7.9 6.1C6.5 42.6 14.6 48 24 48z"
+      />
+    </svg>
   );
 }

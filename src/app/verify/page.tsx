@@ -4,18 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EarnlyMark } from "@/components/AppShell";
+import { UniversityPicker } from "@/components/UniversityPicker";
 import { Button, Icon, Progress, Tag, VerifiedBadge } from "@/components/ui";
 import { useApp } from "@/lib/store";
-
-const SCHOOLS = [
-  "University of Lagos",
-  "University of Ibadan",
-  "Obafemi Awolowo University",
-  "Ahmadu Bello University",
-  "University of Nigeria, Nsukka",
-  "Covenant University",
-  "Other",
-];
+import type { University } from "@/lib/universities";
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -29,6 +21,8 @@ export default function VerifyPage() {
     year: String(student.gradYear),
   });
   const [fileName, setFileName] = useState<string | null>(null);
+  const [university, setUniversity] = useState<University | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -74,7 +68,25 @@ export default function VerifyPage() {
               className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
               onSubmit={(e) => {
                 e.preventDefault();
-                submitVerification();
+                if (!university) {
+                  setFormError("Choose your university from the list, or add it manually.");
+                  return;
+                }
+                setFormError(null);
+                void submitVerification({
+                  fullName: form.name,
+                  course: form.course,
+                  studentEmail: form.studentEmail,
+                  studentId: form.studentId,
+                  gradYear: form.year,
+                  university: {
+                    id: university.id,
+                    name: university.name,
+                    country: university.country,
+                    city: university.city,
+                    custom: university.id.startsWith("c-"),
+                  },
+                });
               }}
             >
               <Field label="Full name" className="sm:col-span-2">
@@ -85,19 +97,17 @@ export default function VerifyPage() {
                   className={inputCls}
                 />
               </Field>
-              <Field label="School or university">
-                <select
-                  value={form.school}
-                  onChange={(e) => set("school", e.target.value)}
-                  className={inputCls}
-                >
-                  {SCHOOLS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              <div className="sm:col-span-2">
+                <UniversityPicker
+                  value={university}
+                  onChange={(u) => {
+                    setUniversity(u);
+                    setFormError(null);
+                  }}
+                  required
+                  hint="Search 240+ universities worldwide. Not there? Add yours in a few seconds."
+                />
+              </div>
               <Field label="Course or field of study">
                 <input
                   required
@@ -146,6 +156,12 @@ export default function VerifyPage() {
               </Field>
 
               <div className="sm:col-span-2">
+                {formError ? (
+                  <p role="alert" className="mb-3 flex items-center gap-2 text-[12.5px] text-negative">
+                    <Icon name="x" size={14} />
+                    {formError}
+                  </p>
+                ) : null}
                 <Button type="submit" size="lg" full iconRight="arrowRight">
                   Submit for verification
                 </Button>

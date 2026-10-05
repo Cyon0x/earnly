@@ -24,6 +24,13 @@ const SOON = [
   { href: "/app/offramp", label: "Off-ramp", icon: "bank" },
 ];
 
+/** Earning products that sit next to the work marketplace. */
+const EARN = [
+  { href: "/app/leasing", label: "Asset Leasing", icon: "layers" },
+  { href: "/app/loans", label: "Inventory Loans", icon: "chart" },
+  { href: "/app/pawn", label: "Pawn Shop", icon: "lock" },
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -97,6 +104,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
+        <div className="eyebrow mt-8 mb-2 px-3">Earn more</div>
+        <nav className="flex flex-col gap-1" aria-label="Earning products" onClick={() => setNotifOpen(false)}>
+          {EARN.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={`flex items-center gap-3 rounded-full px-3 py-2 text-[13px] transition-colors ${
+                isActive(n.href) ? "text-ink" : "text-ink3 hover:text-ink2"
+              }`}
+            >
+              <Icon name={n.icon} size={16} />
+              <span className="flex-1">{n.label}</span>
+              <span className="rounded-full border border-rule px-1.5 py-0.5 text-[9px] font-bold tracking-wide">
+                SOON
+              </span>
+            </Link>
+          ))}
+        </nav>
+
         <div className="eyebrow mt-8 mb-2 px-3">Coming soon</div>
         <nav
           className="flex flex-col gap-1"
@@ -138,8 +164,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
             <button
               onClick={() => {
-                signOut();
-                router.push("/");
+                void signOut().then(() => router.push("/signin"));
               }}
               className="rounded-full border border-rule px-3 py-2 text-[12px] text-ink2 transition-colors hover:text-ink"
             >
@@ -255,7 +280,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <div className="grid gap-1">
-          {[...NAV.slice(4), ...SOON].map((n) => (
+          {[...NAV.slice(4), ...EARN, ...SOON].map((n) => (
             <Link
               key={n.href}
               href={n.href}

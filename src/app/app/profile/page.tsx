@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { ReviewCard } from "@/components/cards";
+import { SkillsPicker } from "@/components/SkillsPicker";
 import {
   Button,
   Icon,
+  Modal,
   Money,
   Progress,
   SectionHeading,
@@ -15,8 +18,10 @@ import { DEMO_REVIEWS, findOpportunity } from "@/lib/data";
 import { useApp } from "@/lib/store";
 
 export default function ProfilePage() {
-  const { student, applications } = useApp();
+  const { student, applications, save, user } = useApp();
   const completed = applications.filter((a) => ["Completed", "Paid"].includes(a.stage));
+  const [editingSkills, setEditingSkills] = useState(false);
+  const [draftSkills, setDraftSkills] = useState<string[]>(student.skills);
 
   return (
     <div className="mx-auto max-w-[1180px]">
@@ -83,7 +88,13 @@ export default function ProfilePage() {
                 {s}
               </Tag>
             ))}
-            <button className="rounded-full border border-dashed border-rule px-2.5 py-1 text-[11.5px] text-ink3 hover:text-ink">
+            <button
+              onClick={() => {
+                setDraftSkills(student.skills);
+                setEditingSkills(true);
+              }}
+              className="rounded-full border border-dashed border-rule px-2.5 py-1 text-[11.5px] text-ink3 hover:text-ink"
+            >
               + Add skill
             </button>
           </div>
@@ -196,6 +207,38 @@ export default function ProfilePage() {
           </section>
         </aside>
       </div>
+      <Modal
+        open={editingSkills}
+        onClose={() => setEditingSkills(false)}
+        label="Edit your skills"
+        wide
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <span className="display-tight text-[20px]">Your skills</span>
+          <button onClick={() => setEditingSkills(false)} aria-label="Close">
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+        <p className="mb-4 text-[13px] text-ink2">
+          These drive what the AI finder searches for and what posters see first.
+        </p>
+        <SkillsPicker value={draftSkills} onChange={setDraftSkills} suggestions={student.skills} />
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-rule pt-4">
+          <Button
+            onClick={() => {
+              void save({ skills: draftSkills });
+              setEditingSkills(false);
+            }}
+            iconRight="check"
+          >
+            Save skills
+          </Button>
+          <span className="text-[12px] text-ink3">
+            {user ? "Saved to your Earnly account." : "Demo mode — kept in this browser only."}
+          </span>
+        </div>
+      </Modal>
+
     </div>
   );
 }

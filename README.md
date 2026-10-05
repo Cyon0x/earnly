@@ -16,13 +16,36 @@ deliberately mocked and the interface says so on screen.
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # production build (webpack)
+npm run dev       # http://localhost:3000
+npm run build     # production build (webpack)
 npm run lint
+npm run db:migrate  # applies db/migrations/*.sql to DATABASE_URL
 ```
 
 Node 20.9+ (Next.js 16 requirement). Fonts are self-hosted in `public/fonts`,
 so the build does not need network access.
+
+### Environment variables
+
+Copy the shape below into `.env.local` for development, and set the same keys
+in **Vercel → Project → Settings → Environment Variables** for production.
+`.env.local` is gitignored; no secret is ever committed.
+
+```
+GOOGLE_CLIENT_ID=        # Google OAuth client id (server-side)
+GOOGLE_CLIENT_SECRET=    # Google OAuth client secret — server-side only
+DATABASE_URL=            # Neon Postgres connection string
+DATABASE_URL_POOLED=     # Neon pooler connection string (used at runtime)
+AUTH_SECRET=             # 32+ random bytes, signs the session cookie
+APP_URL=                 # public origin, e.g. https://earnly-app.vercel.app
+```
+
+`GOOGLE_CLIENT_SECRET`, `DATABASE_URL` and `AUTH_SECRET` are only read inside
+server modules (`src/lib/auth.ts`, `src/lib/db.ts`, `src/lib/session.ts`) and
+never reach the browser. `APP_URL` decides the OAuth callback: the redirect
+sent to Google is `APP_URL + /api/auth/google/callback`, so that exact URL must
+be registered as an authorised redirect URI on the Google OAuth client (add
+`http://localhost:3000/api/auth/google/callback` too, for local work).
 
 ## Design
 
@@ -51,16 +74,21 @@ treatment and overlapping product panels rather than a screenshot in a frame.
 | Area | Status |
 |---|---|
 | Landing page | Built |
-| Auth (Google + email) | **Stubbed** — no provider is contacted, no credential stored |
-| Student verification | Built UI, all four states; approval is a demo button |
-| Onboarding | Built |
+| Auth (Google + email) | **Real** — Google OAuth 2.0 with PKCE, email sign-up/sign-in with scrypt-hashed passwords, signed HttpOnly session cookie, duplicate accounts prevented by provider id then email |
+| Database | **Real** — Neon Postgres (`users`, `auth_accounts`, `profiles`, `user_skills`, `custom_universities`, `sessions`) |
+| University data | **Real** — 244 seeded universities across seven regions, searchable, plus student-added universities persisted to Postgres |
+| Skills data | **Real** — 9 categories, ~190 skills, custom skills, case-insensitive duplicate prevention, persisted per user |
+| Onboarding | Built and persisted; progress resumes where the student stopped |
+| Student verification | Built UI, all four states; the *approval step* is still simulated (no verification provider) |
 | Dashboard, Tasks, Jobs, Internships | Built on demo listings |
 | Search, filters, sorting, saved | Built, in-memory + `localStorage` |
 | Apply → Paid pipeline | Built; stage changes are demo buttons |
 | Profile, ratings, reviews | Built on demo data |
 | Payments (USDC balances, ledger) | Built; **no chain transaction exists** |
 | AI Opportunity Finder | Built wizard, ranked and explained results; **no live web search ran** |
+| Asset Leasing, Inventory Loans, Digital Pawn Shop | Product pages with real explanatory flows; no listing, loan, valuation or pledge is processed — labelled **COMING SOON** |
 | Marketplace, Scholarships, Social, Off-ramp | Visually complete, labelled **COMING SOON** |
+| Testimonials, FAQ, footer, About/Privacy/Terms/Contact pages | Built; testimonials are product previews, not results from this prototype |
 
 Demo money references are prefixed `demo-ref-` on purpose. Nothing in this
 repository signs, broadcasts or stores anything on a blockchain.
@@ -72,11 +100,23 @@ src/
   app/                 routes (App Router)
     page.tsx           landing
     signin, verify, onboarding
+    api/               auth (google/email/session/signout), profile,
+                       universities, health — all Node runtime
     app/               authenticated shell + dashboard, tasks, jobs,
                        internships, work, payments, profile, ai,
+                       leasing, loans, pawn,
                        marketplace, scholarships, social, offramp
-  components/          AppShell, cards, Browse, OpportunityDetail,
-                       ComingSoon, ui.tsx (buttons, tags, badges, modal, icons)
+    about, privacy, terms, contact
+  components/          AppShell, cards, Browse, OpportunityDetail, ComingSoon,
+                       UniversityPicker, SkillsPicker, PageShell,
+                       landing/ (Products, Testimonials, Faq, SiteFooter),
+                       ui.tsx (buttons, tags, badges, modal, icons)
+  lib/
+    auth.ts            Google OAuth, scrypt email auth, account de-duplication
+    db.ts              Neon client (server-only)
+    session.ts         signed HttpOnly session cookie
+    universities.ts     global university catalogue + search
+    skills.ts          categorised skill library, sanitising, de-duplication
   lib/
     types.ts           the data contracts
     data.ts            demo listings, transactions, reviews, notifications
@@ -91,8 +131,12 @@ campus boards, approved partner APIs) can be added without touching the UI.
 `AiResult` shape a live implementation would.
 
 `src/lib/store.tsx` keeps session, verification, onboarding, applications and
-theme in one place, persisted to `localStorage`, so a real auth provider and a
-database can replace it without a redesign.
+theme in one place. When a real account is signed in it reads and writes
+through `/api/profile` to Postgres; without one it falls back to `localStorage`
+so the prototype still runs with no database configured.
+
+`db/migrations/` holds the schema and `npm run db:migrate` applies it
+idempotently (`schema_migrations` tracks what has run).
 
 ## Accessibility
 
@@ -104,6 +148,10 @@ at least 40px, and `prefers-reduced-motion` disables the motion.
 
 ## Deploying
 
-Built for Vercel. No environment variables are required for the prototype; when
-auth, verification, AI and chain integrations are added, their keys belong in
-Vercel environment variables, never in the repository.
+Built for Vercel and deployed at <https://earnly-app.vercel.app>. The OAuth
+callback, database and session variables are set in the Vercel project (see
+*Environment variables* above); no key lives in the repository.
+
+Note: `earnly.vercel.app` is a different project owned by someone else — this
+deployment answers on `earnly-app.vercel.app`, `earnly-student.vercel.app` and
+`getearnly.vercel.app`.
